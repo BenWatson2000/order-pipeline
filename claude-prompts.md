@@ -47,3 +47,8 @@ prompts.
 
 > Add a query that summarises the data quality issues in the output tables.
 
+## Commit 8: End-to-end test
+
+> Add an end-to-end test that runs the full pipeline on the sample data and
+> checks the results are complete and consistent.
+
