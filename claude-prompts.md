@@ -33,3 +33,8 @@ prompts.
 > writes the tables to Parquet and a DuckDB database, plus a data quality
 > report with counts for each cleaning rule.
 
+## Commit 5: CLI
+
+> Add a command-line interface with a command to run the pipeline and one
+> to run SQL against the output database.
+
