@@ -26,3 +26,10 @@ prompts.
 > one row per order line item, and build one row per order with its
 > lifecycle stages, current status and whether it's active. Add unit tests
 > for each rule.
+
+## Commit 4: Extract and load
+
+> Write the pipeline that reads the raw files, runs the transforms, and
+> writes the tables to Parquet and a DuckDB database, plus a data quality
+> report with counts for each cleaning rule.
+
