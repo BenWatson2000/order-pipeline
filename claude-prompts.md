@@ -38,3 +38,8 @@ prompts.
 > Add a command-line interface with a command to run the pipeline and one
 > to run SQL against the output database.
 
+## Commit 6: Analyst queries
+
+> Write SQL to answer the analyst questions in the brief: customers with an
+> active order, and orders shipped in 2024 by product category.
+
