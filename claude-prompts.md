@@ -43,3 +43,7 @@ prompts.
 > Write SQL to answer the analyst questions in the brief: customers with an
 > active order, and orders shipped in 2024 by product category.
 
+## Commit 7: Data quality query
+
+> Add a query that summarises the data quality issues in the output tables.
+
