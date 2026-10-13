@@ -52,3 +52,18 @@ def test_shipped_2024_by_category_query(db):
     assert categories == {"apparel", "beauty", "electronics", "grocery", "home", "sports", "toys"}
     total_2024 = run_sql(con, "03_orders_shipped_2024_total.sql")[0][0]
     assert all(0 < n <= total_2024 for _, n in rows)
+
+
+# Expected answers on the sample data (also quoted in the README). Any change
+# to the cleaning or modelling rules that moves these should be deliberate.
+def test_headline_numbers_on_sample_data(db):
+    con, report = db
+    assert run_sql(con, "01_customers_with_active_order.sql") == [(109, 128)]
+    assert dict(run_sql(con, "02_orders_shipped_2024_by_category.sql")) == {
+        "grocery": 153, "home": 149, "electronics": 136, "toys": 126,
+        "sports": 114, "beauty": 113, "apparel": 110,
+    }
+    assert run_sql(con, "03_orders_shipped_2024_total.sql") == [(594, 14, 0)]
+    assert report["raw_events"] == 3024
+    assert report["rejected"] == {"duplicate_event_id": 73, "missing_order_id": 33}
+    assert report["orders"] == 800

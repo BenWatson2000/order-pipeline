@@ -34,10 +34,11 @@ flowchart LR
 
 ## How to run
 
-Needs Python 3.11–3.13.
+Needs Python 3.11–3.13 (pyarrow 18 has no 3.14 build). Check with
+`python3 --version`; if it's 3.14, use `python3.12` or `python3.13` instead.
 
 ```bash
-python3 -m venv .venv
+python3.12 -m venv .venv           # or python3.11 / python3.13
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 pip install -e .
@@ -61,8 +62,10 @@ Output:
 Results on the sample data:
 - **Customers with an active order:** 109 (128 active orders)
 - **Orders shipped in 2024 by category:** grocery 153, home 149,
-  electronics 136, toys 126, sports 114, beauty 113, apparel 110. That's 594
-  distinct orders; an order with several categories counts once in each.
+  electronics 136, toys 126, sports 114, beauty 113, apparel 110. 594 orders
+  shipped in 2024; an order with several categories counts once in each.
+  579 of them appear in the breakdown: the other 15 contain only qty 0 / -1
+  lines (each with a £0 total), so they have no category.
   14 of these have no usable ship time (7 have no shipped event, 7 have a junk
   shipped timestamp), so the delivery time is used instead, or the payment
   time for the one order not yet delivered (see Data issues).

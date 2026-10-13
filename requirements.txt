@@ -1,4 +1,4 @@
-# Pinned versions the pipeline was tested with (Python 3.11 / 3.12)
+# Pinned versions the pipeline was tested with (Python 3.11–3.13)
 pandas==2.2.3
 pyarrow==18.1.0
 duckdb==1.1.3
