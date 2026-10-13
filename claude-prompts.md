@@ -52,3 +52,8 @@ prompts.
 > Add an end-to-end test that runs the full pipeline on the sample data and
 > checks the results are complete and consistent.
 
+## Commit 9: README
+
+> Write the README: solution design, how to run it, the data issues and how
+> each is handled, the rationale, what was deferred and how to productionise it.
+
