@@ -254,3 +254,35 @@ flowchart LR
   dbt on the warehouse. The logic is small functions and SQL, so the port is
   straightforward.
 
+
+## Use of AI
+
+I used Claude (via Claude Code) as a pair programmer. I reviewed everything
+it produced and made sure the important data decisions were mine: Claude
+would often come back with a follow-up question asking for my input before
+going ahead. The prompt behind each commit is in
+[`claude-prompts.md`](claude-prompts.md); this section summarises it.
+
+- **Understanding the requirements:** Claude read the brief and the raw
+  files, summarised what was being asked, profiled the data, listed the data
+  quality issues, and suggested a stack, project layout and build order. The
+  plan was to build bottom-up: the transform layer first, so the cleaning and
+  modelling rules could be unit tested on their own, then the pipeline, CLI
+  and queries on top. Setting up the project and adding the raw data didn't
+  need prompts.
+- **Cleaning and modelling:** I set the rules (reject only rows that can't be
+  used, and fix and flag the rest) and had Claude write them as pure
+  functions with a unit test for each rule, along with the line items and
+  orders tables.
+- **Pipeline, CLI and SQL:** Claude wrote the code that reads the raw files
+  and writes Parquet, DuckDB and the data quality report, the `run` and
+  `query` commands, the SQL for the analyst questions and the data quality
+  overview query.
+- **Testing:** Claude added an end-to-end test that runs the full pipeline on
+  the sample data and checks the results are complete and consistent.
+- **README:** Claude drafted the solution design, run steps, data issues,
+  rationale, deferred items and productionisation sections.
+- **Ship dates:** some shipped orders had no usable ship date. I asked for one
+  to be inferred where the data allows it, with the inferred dates flagged,
+  and for the tests, queries and README to be updated to match.
+- **This section:** written from `claude-prompts.md`.
