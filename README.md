@@ -49,12 +49,12 @@ Output:
 
 Results on the sample data:
 - **Customers with an active order:** 109 (128 active orders)
-- **Orders shipped in 2024 by category:** grocery 147, home 147,
-  electronics 129, toys 125, beauty 113, apparel 108, sports 107. That's 580
+- **Orders shipped in 2024 by category:** grocery 153, home 149,
+  electronics 136, toys 126, sports 114, beauty 113, apparel 110. That's 594
   distinct orders; an order with several categories counts once in each.
-  "Shipped" means the order has an `order_shipped` event dated in 2024, so 7
-  orders with an unusable ship date and 7 delivered orders with no shipped
-  event at all aren't counted (see Data issues).
+  14 of these have no usable ship time (7 have no shipped event, 7 have a junk
+  shipped timestamp), so the delivery time is used instead, or the payment
+  time for the one order not yet delivered (see Data issues).
 
 ## Solution design
 
@@ -73,7 +73,7 @@ Tables:
 |---|---|---|
 | `fct_order_events` | clean, de-duplicated event | DQ flags + `source_file`/`source_line` for lineage |
 | `fct_order_items` | line item per order | `category`, `quantity`, `unit_price`, `line_amount`, `is_valid_line` |
-| `dim_orders` | order | attributes, `has_<stage>` + `<stage>_at` per lifecycle stage, `current_status`, `is_active`, `order_total` |
+| `dim_orders` | order | attributes, `has_<stage>` + `<stage>_at` per lifecycle stage, `current_status`, `is_active`, `order_total`. `shipped_at` falls back to `delivered_at`, then `paid_at`, when there's no usable ship time (`shipped_at_inferred`) |
 | `rejected_events` | rejected event | the original row plus a `reason` |
 
 Most questions can be answered from `dim_orders` with a simple filter
@@ -91,6 +91,7 @@ erDiagram
         bool is_active
         timestamp paid_at
         timestamp shipped_at
+        bool shipped_at_inferred
         double order_total
     }
     fct_order_events {
@@ -151,7 +152,7 @@ files: e.g. 82 raw negative totals become 79.
 | `order_id` null or `""` | 33 | rejected: can't be tied to an order |
 | `customer_id` null or `""` | 38 | filled from other events of the same order (it never changes within an order) |
 | `items` / `shipping` are Python-style strings, not JSON | all | parsed with `ast.literal_eval` (literals only, so safe) |
-| Placeholder timestamps `1970-01-01` / `2099-12-31` | 15 | set to null and flagged; the event still counts for the order's status. |
+| Placeholder timestamps `1970-01-01` / `2099-12-31` | 15 | set to null and flagged; the event still counts for the order's status. If it was the shipped event, `shipped_at` falls back to `delivered_at` (6 orders across both timestamp rows), or to `paid_at` for the 1 that hasn't been delivered: it can't have shipped before it was paid |
 | Malformed timestamps `2024-13-40T99:99:99` | 16 | same as above |
 | Negative `order_total` | 79 | sign flipped back; the value then matches the order's other events |
 | Null `order_total` | 160 | the order total comes from its other events, or from the item lines if none have it (never needed in the sample: every order has at least one event with a total) |
@@ -159,7 +160,7 @@ files: e.g. 82 raw negative totals become 79.
 | Item lines with no `unit_price` | 32 | kept (still counts for its category); `line_amount` is null. One of these also has qty -1, so it's flagged as `non_positive_quantity` and the report shows 31 `missing_unit_price` |
 | Basket repeated on every event | — | taken once per order so items aren't double counted |
 | Orders with no `order_created` event | 8 | kept, flagged `missing_created_event` |
-| Orders missing a middle stage | 13 | kept as-is: 7 have `order_delivered` but no `order_shipped`, and 6 have `order_shipped` but no `order_paid`. Status is unaffected (all 13 are delivered or refunded), but the 7 aren't counted as shipped in 2024 because there's no shipped event |
+| Orders missing a middle stage | 13 | kept as-is: 7 have `order_delivered` but no `order_shipped`, and 6 have `order_shipped` but no `order_paid`. Status is unaffected (all 13 are delivered or refunded). The 7 must have shipped, so `shipped_at` is set to `delivered_at` and flagged `shipped_at_inferred`; `has_shipped` stays false because the event isn't in the data. A delivered order ships before it arrives, so the ship year can only differ from the delivery year around New Year; none of the inferred ship dates (these 7 plus the 7 junk-timestamp ones above) is near it |
 | EUR / USD orders | 9 | kept in native currency, not converted |
 | Null shipping region/method, UK cities paired with non-GB countries | many | left as-is: no way to know which value is right |
 | Events in Jan 2025 | 17 | kept: these are real follow-on events (13 shipped/delivered, 2 paid, 1 returned, 1 refunded) for orders created 27–31 Dec 2024 |
@@ -175,6 +176,12 @@ files: e.g. 82 raw negative totals become 79.
   customer IDs can be recovered from the same order's other events.
   Conflicting values (e.g. region vs country) are left as they are rather
   than guessed.
+- **Ship dates are inferred only within hard bounds.** When an order shipped
+  but its ship time is missing or junk, the delivery time (an upper bound) or
+  payment time (a lower bound) is used instead and flagged
+  `shipped_at_inferred`, so it can be filtered out. It's an estimate rather
+  than a recovered value, but it can only move an order across a year
+  boundary if it shipped around New Year, and none of the 14 did.
 - **Status comes from which events exist, not their timestamps.** Some
   timestamps are junk, so a delivered order with a bad date is still correctly
   "not active". The trade-off is that an order that genuinely went backwards

@@ -82,6 +82,28 @@ def test_junk_timestamp_still_counts_for_status():
     assert not orders.loc["ORD-1", "is_active"]
 
 
+def test_delivered_without_shipped_event_uses_delivery_time():
+    order = run(event(event_type="order_paid"),
+                event(event_id="e-2", event_type="order_delivered", event_timestamp="2024-03-05T09:00:00Z"))[3].loc["ORD-1"]
+    assert not order["has_shipped"] and order["shipped_at_inferred"]
+    assert order["shipped_at"] == pd.Timestamp("2024-03-05T09:00:00Z")
+
+
+def test_junk_ship_time_falls_back_to_delivery_time():
+    order = run(event(event_type="order_paid"),
+                event(event_id="e-2", event_type="order_shipped", event_timestamp="2024-13-40T99:99:99"),
+                event(event_id="e-3", event_type="order_delivered", event_timestamp="2024-03-05T09:00:00Z"))[3].loc["ORD-1"]
+    assert order["has_shipped"] and order["shipped_at_inferred"]
+    assert order["shipped_at"] == pd.Timestamp("2024-03-05T09:00:00Z")
+
+
+def test_undelivered_junk_ship_time_falls_back_to_paid_time():
+    order = run(event(event_type="order_paid", event_timestamp="2024-03-01T10:00:00Z"),
+                event(event_id="e-2", event_type="order_shipped", event_timestamp="1970-01-01T00:00:00Z"))[3].loc["ORD-1"]
+    assert order["shipped_at_inferred"]
+    assert order["shipped_at"] == pd.Timestamp("2024-03-01T10:00:00Z")
+
+
 def test_total_falls_back_to_items():
     order = run(event(order_total=None))[3].loc["ORD-1"]
     assert order["order_total"] == 30.0 and order["order_total_from_items"]

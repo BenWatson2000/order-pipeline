@@ -69,6 +69,7 @@ def quality_report(raw, rejected, events, items, orders) -> dict:
         "line_issues": counts(items["line_issue"]),
         "orders": len(orders),
         "orders_missing_created_event": int(orders["missing_created_event"].sum()),
+        "orders_shipped_at_inferred": int(orders["shipped_at_inferred"].sum()),
         "orders_by_status": counts(orders["current_status"]),
     }
 

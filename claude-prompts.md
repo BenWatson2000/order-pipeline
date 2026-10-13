@@ -57,3 +57,8 @@ prompts.
 > Write the README: solution design, how to run it, the data issues and how
 > each is handled, the rationale, what was deferred and how to productionise it.
 
+## Commit 10: Ship dates
+
+> Some shipped orders have no usable ship date. Infer one where the data
+> allows it, flag the inferred dates, and update the tests, queries and
+> README to match.

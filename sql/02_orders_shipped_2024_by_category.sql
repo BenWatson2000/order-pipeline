@@ -2,6 +2,9 @@
 -- An order containing items from several categories is counted once in each,
 -- so the category rows can sum to more than the total number of orders.
 -- Lines with a zero/negative quantity are not real items and are excluded.
+-- Shipped/delivered orders with no usable ship time (no shipped event, or a
+-- junk timestamp on it) use the delivery time as shipped_at, or the payment
+-- time if not yet delivered (shipped_at_inferred in dim_orders).
 -- Timestamps are stored in UTC.
 SELECT
     i.category,

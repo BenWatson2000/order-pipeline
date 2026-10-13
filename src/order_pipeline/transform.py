@@ -148,6 +148,14 @@ def build_orders(events: pd.DataFrame, items: pd.DataFrame) -> pd.DataFrame:
         orders[f"has_{stage}"] = seen[stage] if stage in seen else False
         orders[f"{stage}_at"] = first_ts[stage] if stage in first_ts else pd.Series(pd.NaT, index=orders.index, dtype="datetime64[ns, UTC]")
 
+    # When a shipped (or delivered) order has no usable ship time - no shipped
+    # event, or its timestamp was junk - use the delivery time, or failing that
+    # the payment time (it can't ship before it's paid), and flag it.
+    shipped = orders["has_shipped"] | orders["has_delivered"]
+    fallback = orders["delivered_at"].fillna(orders["paid_at"])
+    orders["shipped_at_inferred"] = orders["shipped_at"].isna() & shipped & fallback.notna()
+    orders["shipped_at"] = orders["shipped_at"].mask(orders["shipped_at_inferred"], fallback)
+
     orders["current_status"] = orders.apply(
         lambda o: next(s for s in STATUS_PRECEDENCE if o[f"has_{s}"]), axis=1)
     orders["is_active"] = orders["has_paid"] & ~(orders["has_delivered"] | orders["has_cancelled"] | orders["has_refunded"])
