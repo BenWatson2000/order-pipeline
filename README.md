@@ -1,5 +1,16 @@
 # Order Events ETL
 
+**Contents**
+- [How to run](#how-to-run)
+- [Solution design](#solution-design)
+- [Data issues and how they're handled](#data-issues-and-how-theyre-handled)
+- [Rationale](#rationale)
+  - [Deferred on purpose](#deferred-on-purpose)
+- [Productionisation](#productionisation)
+- [Use of AI](#use-of-ai)
+
+---
+
 Reads the raw JSON order events, cleans them, and writes query-friendly tables
 to Parquet and a DuckDB database.
 
@@ -196,7 +207,8 @@ files: e.g. 82 raw negative totals become 79.
 - **SQL lives in files** so it's version-controlled and tested like the rest
   of the code.
 
-**Deferred on purpose:**
+### Deferred on purpose
+
 - **Currency conversion:** needs an FX source and a policy on which date's
   rate to use. Only 9 orders are affected.
 - **Incremental loads:** each run is a full rebuild, which is fine at this size.
